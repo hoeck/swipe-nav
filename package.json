@@ -1,0 +1,23 @@
+{
+  "name": "swipe-nav",
+  "version": "0.0.1",
+  "description": "swipe-to-navigate component in plain ES6",
+  "main": "swipe-nav.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "http-server . -p 8080 -c-1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hoeck/swipe-nav.git"
+  },
+  "author": "Erik Söhnel",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/hoeck/swipe-nav/issues"
+  },
+  "homepage": "https://github.com/hoeck/swipe-nav#readme",
+  "devDependencies": {
+    "http-server": "^0.9.0"
+  }
+}
