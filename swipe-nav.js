@@ -27,24 +27,6 @@
     }
 */
 
-let counts = 0;
-function debug () {
-    document.getElementById('a').innerText = counts++;
-}
-
-let counts2 = 0;
-function debug2 () {
-    document.getElementById('b').innerText = counts2++;
-}
-
-function debugmsg (msg) {
-    document.getElementById('b').innerText = msg;
-}
-
-function debugmsg2 (msg) {
-    document.getElementById('c').innerText = msg;
-}
-
 class SwipeNav {
 
     constructor (options) {
@@ -59,6 +41,7 @@ class SwipeNav {
         this._touchMoveCallback = this._touchMove.bind(this);
         this._touchEndCallback = this._touchEnd.bind(this);
 
+        // constants
         this._SLIDE_MASS = 1;
         this._SWIPE_ENERGY_THRESHOLD = 0.25;
 
@@ -134,8 +117,6 @@ class SwipeNav {
         // attach listeners
         this._element.addEventListener('touchmove', this._touchMoveCallback, false);
         this._element.addEventListener('touchend', this._touchEndCallback, false);
-
-
     }
 
     _touchMove (event) {
@@ -208,27 +189,25 @@ class SwipeNav {
         //   Acceleration = deltaVelocity / deltaT
         //   Energy = F over time ~= sum(F * deltaT) = sum(m * a * deltaT) = sum(m * deltaVelocity)
         this._energy += (this._velocity - prevVelocity) * this._SLIDE_MASS;
-        debugmsg(`${this._energy}`);
 
         // render changes in a new frame unless we are already waiting for one
         // (mobile devices seem to fire touch events really fast, faster than
         //  screen refresh and even when not moving the thumb)
         if (this._animationFrameId === null) {
             this._animationFrameId = window.requestAnimationFrame(() => {
-                this._translateSlide(this._slideIndex-1, this._distance, 0);
+                this._translateSlide(this._slideIndex - 1, this._distance, 0);
                 this._translateSlide(this._slideIndex, this._distance, 0);
-                this._translateSlide(this._slideIndex+1, this._distance, 0);
+                this._translateSlide(this._slideIndex + 1, this._distance, 0);
                 this._animationFrameId = null;
             });
         }
     }
 
-    _touchEnd (event) {
+    _touchEnd () {
         if (this._isScrolling) {
             return;
         }
 
-        const duration = this._deltaT;
         const isSwipingLeft = this._distance < 0;
         const isSwipingRight = this._distance > 0;
 
@@ -244,7 +223,7 @@ class SwipeNav {
                    && isSwipingRightAllowed)
                   ||
                   (isSwipingLeft
-                   && this._slideIndex !== this._slides.length -1
+                   && this._slideIndex !== this._slides.length - 1
                    && isSwipingLeftAllowed);
 
         // remove listeners
@@ -269,26 +248,26 @@ class SwipeNav {
 
             if (isValidSwipeGesture && isSwipingPossible) {
                 if (isSwipingLeft) {
-                    this._moveSlide(this._slideIndex-1, -this._width, 0);
+                    this._moveSlide(this._slideIndex - 1, -this._width, 0);
                     this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] - this._width, transitionTime);
-                    this._moveSlide(this._slideIndex+1, this._slidePositions[this._slideIndex+1] - this._width, transitionTime);
+                    this._moveSlide(this._slideIndex + 1, this._slidePositions[this._slideIndex + 1] - this._width, transitionTime);
                     this._slideIndex += 1;
                 } else {
-                    this._moveSlide(this._slideIndex+1, this._width, 0);
+                    this._moveSlide(this._slideIndex + 1, this._width, 0);
                     this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] + this._width, transitionTime);
-                    this._moveSlide(this._slideIndex-1, this._slidePositions[this._slideIndex-1] + this._width, transitionTime);
+                    this._moveSlide(this._slideIndex - 1, this._slidePositions[this._slideIndex - 1] + this._width, transitionTime);
                     this._slideIndex -= 1;
                 }
             } else {
                 // move slides back into their current position
-                this._moveSlide(this._slideIndex-1, -this._width, 300);
+                this._moveSlide(this._slideIndex - 1, -this._width, 300);
                 this._moveSlide(this._slideIndex, 0, 300);
-                this._moveSlide(this._slideIndex+1, this._width, 300);
+                this._moveSlide(this._slideIndex + 1, this._width, 300);
             }
         });
     }
 
-    _resize (event) {
+    _resize () {
         this.kill();
         this.setup();
     }
@@ -309,12 +288,17 @@ class SwipeNav {
             slide.style.left = `${index * - this._width}px`;
 
             // divide the stack into three: left, right, center
+            let position;
 
-            this._moveSlide(
-                index,
-                this._slideIndex > index ? -this._width : (this._slideIndex < index ? this._width : 0),
-                0
-            );
+            if (this._slideIndex > index) {
+                position = -this._width; // left
+            } else if (this._slideIndex < index) {
+                position = this._width; // right
+            } else {
+                position = 0; // center
+            }
+
+            this._moveSlide(index, position, 0);
         });
 
         // setup event listeners

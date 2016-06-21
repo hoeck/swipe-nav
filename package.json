@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/hoeck/swipe-nav#readme",
   "devDependencies": {
+    "babel-eslint": "^6.0.5",
+    "eslint": "^2.13.1",
     "http-server": "^0.9.0"
   }
 }
