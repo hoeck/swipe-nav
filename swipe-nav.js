@@ -32,6 +32,11 @@ function debug () {
     document.getElementById('a').innerText = counts++;
 }
 
+let counts2 = 0;
+function debug2 () {
+    document.getElementById('b').innerText = counts2++;
+}
+
 function debugmsg (msg) {
     document.getElementById('b').innerText = msg;
 }
@@ -54,27 +59,32 @@ class SwipeNav {
         this._touchMoveCallback = this._touchMove.bind(this);
         this._touchEndCallback = this._touchEnd.bind(this);
 
-        // render state
-        this._animationFrameId = null;
+        this._SLIDE_MASS = 1;
+        this._SWIPE_ENERGY_THRESHOLD = 0.25;
 
-        this._startX = null;
-        this._startY = null;
-        this._startTime = null;
+        // render state
+        this._animationFrameId = null; // current touchmove animation frame
+        this._width = 0; // window width
+
+        this._startX = null; // touch start pageX
+        this._startY = null; // touch start pageY
+        this._startTime = null; // touch start timestamp
         this._isScrolling = null;
 
-        this._deltaX = null;
-        this._deltaY = null;
-        this._distance = null;
+        this._deltaX = null; // horizontal distance from touch start
+        this._deltaY = null; // vertical distance from touch start
+        this._deltaT = null; // time since swipe start
+        this._distance = null; // actual horizontal slide movement
+        this._velocity = 0; // current horizontal (X) velocity
+        this._energy = 0; // energy applied during a swipe
 
-        this._slideIndex = 0;
+        this._slideIndex = 0; // currently displayed slide
         this._slidePositions = [];
-
-        this._width = 0;
 
         this.setup();
     }
 
-    // permanently move a slide to targetPosition
+    // permanently (update _slidePositions) move a slide to targetPosition
     _moveSlide (index, targetPosition, speed) {
         const slide = this._slides[index];
 
@@ -112,15 +122,20 @@ class SwipeNav {
         this._startY = event.touches[0].pageY;
 
         // reset all other points
-        this._startTime = (new Date()).getTime();
+        this._startTime = event.timeStamp;
         this._isScrolling = null;
-        this._deltaX = this._startX;
-        this._deltaY = this._startY;
+        this._deltaX = 0;
+        this._deltaY = 0;
+        this._deltaT = 0;
         this._distance = 0;
+        this._velocity = 0;
+        this._energy = 0;
 
         // attach listeners
         this._element.addEventListener('touchmove', this._touchMoveCallback, false);
         this._element.addEventListener('touchend', this._touchEndCallback, false);
+
+
     }
 
     _touchMove (event) {
@@ -163,8 +178,8 @@ class SwipeNav {
         const isSwipingLeft = this._deltaX < 0; // <---(thumb)
         const isSwipingRight = this._deltaX > 0; // (thumb)--->
 
-        const isFirstSlide = true;
-        const isLastSlide = false;
+        const isFirstSlide = this._slideIndex === 0;
+        const isLastSlide = this._slideIndex === this._slides.length - 1;
 
         // TODO: compute these via callback on touchStart
         // or provide methods .setSlidingLeftAllowed or setSlidePermissions({left:true, right:false})
@@ -181,15 +196,28 @@ class SwipeNav {
             this._distance = this._deltaX;
         }
 
+        const prevDeltaT = this._deltaT;
+        const prevVelocity = this._velocity || 0;
+
+        this._deltaT = event.timeStamp - this._startTime;
+        this._velocity = (this._deltaX - prevDeltaX) / (this._deltaT - prevDeltaT);
+
+        // Compute the energy applied while swiping to create slides that
+        // behave like a *real* thing using classical mechanics:
+        //   Force = Mass * Acceleration
+        //   Acceleration = deltaVelocity / deltaT
+        //   Energy = F over time ~= sum(F * deltaT) = sum(m * a * deltaT) = sum(m * deltaVelocity)
+        this._energy += (this._velocity - prevVelocity) * this._SLIDE_MASS;
+        debugmsg(`${this._energy}`);
+
         // render changes in a new frame unless we are already waiting for one
         // (mobile devices seem to fire touch events really fast, faster than
         //  screen refresh and even when not moving the thumb)
         if (this._animationFrameId === null) {
-            this._animationFrameId = window.requestAnimationFrame((ts) => {
+            this._animationFrameId = window.requestAnimationFrame(() => {
                 this._translateSlide(this._slideIndex-1, this._distance, 0);
                 this._translateSlide(this._slideIndex, this._distance, 0);
                 this._translateSlide(this._slideIndex+1, this._distance, 0);
-
                 this._animationFrameId = null;
             });
         }
@@ -200,16 +228,12 @@ class SwipeNav {
             return;
         }
 
-        const duration = (new Date()).getTime() - this._startTime;
+        const duration = this._deltaT;
         const isSwipingLeft = this._distance < 0;
         const isSwipingRight = this._distance > 0;
 
-        // determine if swipe attempt triggers next/prev slide
-        const isValidSwipeGesture =
-                  // if swipe duration is less than 250ms and swipe distance is greater than 20px
-                  (duration < 250 && Math.abs(this._distance) > 20)
-                  // or if swipe distance is greater than half the width
-                  || Math.abs(this._distance) > this._width/2;
+        // did the touch gesture apply enough energy to move the slide
+        const isValidSwipeGesture = Math.abs(this._energy) > this._SWIPE_ENERGY_THRESHOLD;
 
         const isSwipingLeftAllowed = true;
         const isSwipingRightAllowed = true;
@@ -223,8 +247,6 @@ class SwipeNav {
                    && this._slideIndex !== this._slides.length -1
                    && isSwipingLeftAllowed);
 
-        const speed = 300;
-
         // remove listeners
         this._element.removeEventListener('touchmove', this._touchMoveCallback, false);
         this._element.removeEventListener('touchend', this._touchEndCallback, false);
@@ -237,23 +259,31 @@ class SwipeNav {
 
         // finish the swipe using a css transition
         window.requestAnimationFrame(() => {
+            // Use the current (kinetic) energy of the slide to project its velocity via:
+            //   Energy = 0.5 * Mass * Velocity => Velocity = sqrt(Energy / 0.5*Mass)
+            //   Velocity = Distance / Time => Time = Distance / Velocity
+            // and reorder the equation to get time we need for the css transition.
+            const remainingDistance = Math.max(0, this._width - Math.abs(this._deltaX));
+            const transitionVelocity = Math.sqrt(Math.abs(this._energy) / (0.5 * this._SLIDE_MASS));
+            const transitionTime =  remainingDistance / transitionVelocity;
+
             if (isValidSwipeGesture && isSwipingPossible) {
                 if (isSwipingLeft) {
                     this._moveSlide(this._slideIndex-1, -this._width, 0);
-                    this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] - this._width, speed);
-                    this._moveSlide(this._slideIndex+1, this._slidePositions[this._slideIndex+1] - this._width, speed);
+                    this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] - this._width, transitionTime);
+                    this._moveSlide(this._slideIndex+1, this._slidePositions[this._slideIndex+1] - this._width, transitionTime);
                     this._slideIndex += 1;
                 } else {
                     this._moveSlide(this._slideIndex+1, this._width, 0);
-                    this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] + this._width, speed);
-                    this._moveSlide(this._slideIndex-1, this._slidePositions[this._slideIndex-1] + this._width, speed);
+                    this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] + this._width, transitionTime);
+                    this._moveSlide(this._slideIndex-1, this._slidePositions[this._slideIndex-1] + this._width, transitionTime);
                     this._slideIndex -= 1;
                 }
             } else {
                 // move slides back into their current position
-                this._moveSlide(this._slideIndex-1, -this._width, speed);
-                this._moveSlide(this._slideIndex, 0, speed);
-                this._moveSlide(this._slideIndex+1, this._width, speed);
+                this._moveSlide(this._slideIndex-1, -this._width, 300);
+                this._moveSlide(this._slideIndex, 0, 300);
+                this._moveSlide(this._slideIndex+1, this._width, 300);
             }
         });
     }
