@@ -1,91 +1,208 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <title>Swipe 2</title>
-        <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+        <title>SwipeNav</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/github.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/furtive/2.2.4/furtive.min.css">
+
         <style>
-
-            body {
-                font-family: 'Source Code Pro', Courier, monospace;
-                font-size: 14px;
-                line-height: 1.5;
+            .divider {
+                border-bottom: .1rem solid #efefef;
             }
 
-            .swipe-nav div b {
-                background-color: #EE3769;
-                color: #eee;
-                border-radius: 3px;
-                box-shadow: inset 0 -3px 0 0 rgba(0, 0, 0, 0.1);
+            .full {
+                height: 100%;
+                width: 100%;
             }
 
-            .swipe-nav-wrap > div {
-                margin: 0;
+            .vscroll {
+                overflow-y: auto;
             }
 
-            .swipe-nav-wrap > div b {
-                display: block;
-                margin: 0 1.5em;
-                padding: 4em 1em;
-                font-size: 2em;
-                text-align: center;
+            div.absolute-full {
+                position: absolute !important;
+                top:0; bottom: 0; left:0; right: 0;
             }
 
-            /* Swipe Nav required styles */
+            /* SwipeNav required styles */
 
             .swipe-nav {
                 overflow: hidden;
                 visibility: hidden;
                 position: relative;
             }
+
             .swipe-nav-wrap {
                 overflow: hidden;
                 position: relative;
             }
+
             .swipe-nav-wrap > div {
                 float: left;
                 width: 100%;
                 position: relative;
             }
-
-            /* END required styles */
-
         </style>
 
     </head>
     <body>
-        <h2>Playground</h2>
+        <div class="swipe-nav absolute-full">
+            <div class="swipe-nav-wrap full">
+                <div class="full px2">
+                    <!-- level 0 -->
+                    <div ontouchstart="loadContent('nothing'); noMoreContent()" class="txt--center">
+                        <h2>SwipeNav</h2>
+                        <div>
+                            <em>Swipe to the right over each item to uncover its contents!</em>
+                        </div>
+                    </div>
+                    <div ontouchstart="loadContent('intro');" class="h4 item p2 divider">Swipe right to navigate</div>
+                    <div ontouchstart="loadContent('links')" class="h4 item p2 divider">Links</div>
+                    <div ontouchstart="loadContent('usage')" class="h4 item p2">Usage</div>
+                </div>
+                <div class="full px2 vscroll">
+                    <!-- level 1 -->
+                    <div id="nothing"></div>
+                    <div class="full" style="display: none;" id="intro">
+                        <div ontouchstart="loadContent('nothing2'); noMoreContent()" class="txt--center">
+                            <h2>Intro</h2>
+                        </div>
+                        <div ontouchstart="loadContent('nothing2'); noMoreContent();" class="h4 item p2 divider">And swipe left to navigate back</div>
+                        <div ontouchstart="loadContent('intro-level2');" class="h4 item p2 divider">Or swipe right to go one level deeper</div>
+                        <div ontouchstart="loadContent('rationale');" class="h4 item p2 divider">Rationale</div>
+                    </div>
 
-        <div class="swipe-nav">
-            <div class="swipe-nav-wrap">
-                <div><b>0</b></div>
-                <div><b>1</b></div>
-                <div><b>2</b></div>
-                <div><b>3</b></div>
-                <div><b>4</b></div>
-                <div><b>5</b></div>
-                <div><b>6</b></div>
-                <div><b>7</b></div>
-                <div><b>8</b></div>
-                <div><b>9</b></div>
-                <div><b>10</b></div>
-                <div><b>11</b></div>
-            </div>
-        </div>
-        <script src="swipe-nav.js"></script>
-        <script>
-// pure JS
-var element = document.getElementsByClassName('swipe-nav')[0];
+                    <div ontouchstart="noMoreContent();" id="links" class="full" style="display: none;">
+                        <h2>Links</h2>
 
-document.addEventListener("contextmenu", function(e){
-    e.preventDefault();
-}, false);
+                        <div class="media">
+                            <div class="media-figure">
+                                <b>Github</b>
+                            </div>
+                            <div class="media-body">
+                                <a class="btn--link" href="https://github.com/hoeck/swipe-nav">github.com/hoeck/swipe-nav</a>
+                            </div>
+                        </div>
 
-window.swipeNavInstance = new SwipeNav({
+                        <div class="media">
+                            <div class="media-figure">
+                                <b>Example Project</b>
+                            </div>
+                            <div class="media-body">
+                                <a class="btn--link" href="https://hoeck.github.io/hnbrowser">hoeck.github.io/hnbrowser</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div ontouchstart="noMoreContent();" id="usage" class="full" style="display: none;">
+                        <h2 class="txt--center">Usage</h2>
+
+                        <pre><code class="css">.swipe-nav {
+    overflow: hidden;
+    visibility: hidden;
+    position: relative;
+}
+
+.swipe-nav-wrap {
+    overflow: hidden;
+    position: relative;
+}
+
+.swipe-nav-wrap > div {
+    float: left;
+    width: 100%;
+    position: relative;
+}
+                        </code></pre>
+
+                        <pre><code class="html">&lt;script src="swipe-nav.js"&gt;&lt;/script&gt;
+
+&lt;div class="swipe-nav"&gt;
+    &lt;div class="swipe-nav-wrap"&gt;
+        &lt;div id="0"&gt;Slide 0&lt;/div&gt;
+        &lt;div id="1"&gt;Slide 1&lt;/div&gt;
+        &lt;div id="2"&gt;Slide 2&lt;/div&gt;
+        &lt;div id="3"&gt;Slide 2&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                        </code></pre>
+
+                        <pre><code class="javascript">const element = document.querySelector(
+    '.swipe-nav'
+);
+
+const swipeNav = new SwipeNav({
     container: element
 });
 
+// use touchstart events to manipulate
+// slide contents
+function touchStart (event) {
+    // show, hide, create or remove
+    // content based on event.target
+
+    // or set swipe boundaries via
+    swipeNav.setIsContentAvailable({
+        left:true,
+        right: false
+    });
+}
+                        </code></pre>
+                    </div>
+                </div>
+                <div class="full px2">
+                    <!-- level 2 -->
+                    <div id="nothing2"></div>
+                    <div id="intro-level2">
+                        <div ontouchstart="noMoreContent();" class="txt--center">
+                            <h2>Intro (2)</h2>
+
+                            <div>nothing to see here</div>
+                        </div>
+                    </div>
+                    <div id="rationale">
+                        <div ontouchstart="noMoreContent();" class="txt--center">
+                            <h2>Rationale</h2>
+
+                            <p>
+                                Use it to navigate trees with fat nodes on a moobile device, e.g. online discussions.
+                                See <a href="https://hoeck.github.io/hnbrowser">hoeck.github.io/hnbrowser</a> for a demo.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+        <script src="swipe-nav.js"></script>
+        <script>
+hljs.initHighlightingOnLoad();
+
+// pure JS
+const element = document.querySelectorAll('.swipe-nav')[0];
+
+const swipeNav = new SwipeNav({
+    container: element
+});
+
+function noMoreContent () {
+    swipeNav.setIsContentAvailable({left:true, right: false});
+}
+
+function loadContent (id) {
+    swipeNav.setIsContentAvailable({left:true, right: true});
+
+    const contentElement = document.getElementById(id);
+
+    Array.prototype.slice.call(contentElement.parentElement.children).forEach((element) => {
+        element.style.display = 'none';
+    });
+
+    contentElement.style.display = 'block';
+}
         </script>
     </body>
 </html>
