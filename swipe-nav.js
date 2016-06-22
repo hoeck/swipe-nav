@@ -27,6 +27,17 @@
     }
 */
 
+// create a mouse click event on element
+function simulateClick (element) {
+    const event = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true
+    });
+
+    element.dispatchEvent(event);
+}
+
 class SwipeNav {
 
     constructor (options) {
@@ -44,6 +55,8 @@ class SwipeNav {
         // constants
         this._SLIDE_MASS = 1;
         this._SWIPE_ENERGY_THRESHOLD = 0.25;
+        this._CLICK_ENERGY_THRESHOLD = 0.03;
+        this._CLICK_TIME_MAX = 350;
 
         // render state
         this._animationFrameId = null; // current touchmove animation frame
@@ -63,6 +76,10 @@ class SwipeNav {
 
         this._slideIndex = 0; // currently displayed slide
         this._slidePositions = [];
+
+        // set artificial swipe bounds
+        this._isSwipeLeftAllowed = true;
+        this._isSwipeRightAllowed = true;
 
         this.setup();
     }
@@ -203,7 +220,7 @@ class SwipeNav {
         }
     }
 
-    _touchEnd () {
+    _touchEnd (event) {
         if (this._isScrolling) {
             return;
         }
@@ -214,17 +231,15 @@ class SwipeNav {
         // did the touch gesture apply enough energy to move the slide
         const isValidSwipeGesture = Math.abs(this._energy) > this._SWIPE_ENERGY_THRESHOLD;
 
-        const isSwipingLeftAllowed = true;
-        const isSwipingRightAllowed = true;
-
-        const isSwipingPossible =
+        // is there anything to show?
+        const isSwipePossible =
                   (isSwipingRight
                    && this._slideIndex !== 0
-                   && isSwipingRightAllowed)
+                   && this._isSwipeRightAllowed)
                   ||
                   (isSwipingLeft
                    && this._slideIndex !== this._slides.length - 1
-                   && isSwipingLeftAllowed);
+                   && this._isSwipeLeftAllowed);
 
         // remove listeners
         this._element.removeEventListener('touchmove', this._touchMoveCallback, false);
@@ -234,6 +249,14 @@ class SwipeNav {
         if (this._animationFrameId !== null) {
             window.cancelAnimationFrame(this._animationFrameId);
             this._animationFrameId = null;
+        }
+
+        // click detection
+        const hasNotMoved = Math.abs(this._energy) < this._CLICK_ENERGY_THRESHOLD;
+        const isShortTouch = (event.timeStamp - this._startTime) < this._CLICK_TIME_MAX;
+
+        if (hasNotMoved && isShortTouch) {
+            simulateClick(event.target);
         }
 
         // finish the swipe using a css transition
@@ -246,7 +269,7 @@ class SwipeNav {
             const transitionVelocity = Math.sqrt(Math.abs(this._energy) / (0.5 * this._SLIDE_MASS));
             const transitionTime =  remainingDistance / transitionVelocity;
 
-            if (isValidSwipeGesture && isSwipingPossible) {
+            if (isValidSwipeGesture && isSwipePossible) {
                 if (isSwipingLeft) {
                     this._moveSlide(this._slideIndex - 1, -this._width, 0);
                     this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] - this._width, transitionTime);
@@ -326,5 +349,10 @@ class SwipeNav {
         this._element.removeEventListener('touchstart', this._touchMoveCallback, false);
         this._element.removeEventListener('touchstart', this._touchEndCallback, false);
         window.removeEventListener('resize', this._resizeCallback);
+    }
+
+    setIsContentAvailable ({left, right}) {
+        this._isSwipeLeftAllowed = right;
+        this._isSwipeRightAllowed = left;
     }
 }
