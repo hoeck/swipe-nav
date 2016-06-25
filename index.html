@@ -26,6 +26,11 @@
                 top:0; bottom: 0; left:0; right: 0;
             }
 
+            .blurred {
+                filter: blur(2px);
+                -webkit-filter: blur(2px);
+            }
+
             /* SwipeNav required styles */
 
             .swipe-nav {
@@ -48,6 +53,7 @@
 
     </head>
     <body>
+        <!-- swipe component -->
         <div class="swipe-nav absolute-full">
             <div class="swipe-nav-wrap full">
                 <div class="full px2">
@@ -58,9 +64,9 @@
                             <em>Swipe to the right over each item to uncover its contents!</em>
                         </div>
                     </div>
-                    <div ontouchstart="loadContent('intro');" class="h4 item p2 divider">Swipe right to navigate</div>
-                    <div ontouchstart="loadContent('links')" class="h4 item p2 divider">Links</div>
-                    <div ontouchstart="loadContent('usage')" class="h4 item p2">Usage</div>
+                    <div ontouchstart="loadContent('intro');" class="h4 item p2 divider">Swipe left to navigate</div>
+                    <div ontouchstart="loadContent('usage')" class="h4 item p2 divider">Usage</div>
+                    <div ontouchstart="loadContent('links')" class="h4 item p2">Links</div>
                 </div>
                 <div class="full px2 vscroll">
                     <!-- level 1 -->
@@ -69,9 +75,9 @@
                         <div ontouchstart="loadContent('nothing2'); noMoreContent()" class="txt--center">
                             <h2>Intro</h2>
                         </div>
-                        <div ontouchstart="loadContent('nothing2'); noMoreContent();" class="h4 item p2 divider">And swipe left to navigate back</div>
-                        <div ontouchstart="loadContent('intro-level2');" class="h4 item p2 divider">Or swipe right to go one level deeper</div>
-                        <div ontouchstart="loadContent('rationale');" class="h4 item p2 divider">Rationale</div>
+                        <div ontouchstart="loadContent('nothing2'); noMoreContent();" class="h4 item p2 divider">And swipe right to navigate back</div>
+                        <div ontouchstart="loadContent('intro-level2');" class="h4 item p2 divider">Or swipe left to go one level deeper</div>
+                        <div ontouchstart="loadContent('rationale');" class="h4 item p2">Rationale</div>
                     </div>
 
                     <div ontouchstart="noMoreContent();" id="links" class="full" style="display: none;">
@@ -167,11 +173,33 @@ function touchStart (event) {
                             <h2>Rationale</h2>
 
                             <p>
-                                Use it to navigate trees with fat nodes on a moobile device, e.g. online discussions.
-                                See <a href="https://hoeck.github.io/hnbrowser">hoeck.github.io/hnbrowser</a> for a demo.
+                                Use <code>SwipeNav</code> to navigate trees with fat nodes on a mobile device, e.g. discussion threads.
+                                See <a href="https://hoeck.github.io/hnbrowser">hoeck.github.io/hnbrowser</a>.
+                            </p>
+
+                            <p>
+                                <code>SwipeNav</code> is built using <code>requestAnimationFrame</code> and a fast move event. It works well on mobile devices firing a lot of touch events.
+                            </p>
+
+                            <p>
+                                <code>SwipeNav</code> computes the force of a swipe to achieve a natural slide movement.
+                            </p>
+
+                            <p>
+                                The <code>SwipeNav</code> API is minimal and best used from within react or angular.
                             </p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+        <!-- this demo works only on touch-enabled devices-->
+        <div id="no-touch-info" style="position:absolute; top:0; right:0; bottom:0; left:0; background-color:rgba(0,0,0,0.2); display:none;">
+            <div class="measure center">
+                <div class="bg--red fnt--white p2 mx2 txt--center" style="margin-top:10rem;">
+                    <h4>SwipeNav needs <b>touch events</b> in order to work.</h4>
+
+                    <p>(use your browsers devtools and enable mobile/responsive emulation mode)</p>
                 </div>
             </div>
         </div>
@@ -202,6 +230,12 @@ function loadContent (id) {
     });
 
     contentElement.style.display = 'block';
+}
+
+// display a warning if this is not a touch device
+if (!('ontouchstart' in window)) {
+    element.classList.add('blurred');
+    document.getElementById('no-touch-info').style.display = 'block';
 }
         </script>
     </body>
