@@ -38,8 +38,16 @@ function simulateClick (element) {
     element.dispatchEvent(event);
 }
 
+/**
+ * Low-level swipe component.
+ */
 class SwipeNav {
 
+    /**
+     * options:
+     * - container: a DOM element
+     * - index: index of the slide to display initially
+     */
     constructor (options) {
         // DOM nodes
         this._container = options.container;
@@ -74,7 +82,7 @@ class SwipeNav {
         this._velocity = 0; // current horizontal (X) velocity
         this._energy = 0; // energy applied during a swipe
 
-        this._slideIndex = 0; // currently displayed slide
+        this._slideIndex = options.slideIndex || 0; // currently displayed slide
         this._slidePositions = [];
 
         // set artificial swipe bounds
@@ -111,7 +119,7 @@ class SwipeNav {
         slide.style.transform = `translateX(${this._slidePositions[index] + distance}px)`;
     }
 
-    // event callback methods
+    // touchstart event handler
     _touchStart (event) {
         // disable the default action (zoom) to not loose the first few move
         // events - loosing them results in a badly stuttering swipe start
@@ -136,6 +144,7 @@ class SwipeNav {
         this._element.addEventListener('touchend', this._touchEndCallback, false);
     }
 
+    // touchmove event handler
     _touchMove (event) {
         // ensure swiping with one touch and not pinching
         if (event.touches.length > 1 || event.scale && event.scale !== 1) {
@@ -220,6 +229,7 @@ class SwipeNav {
         }
     }
 
+    // touchend event handler
     _touchEnd (event) {
         if (this._isScrolling) {
             return;
@@ -290,11 +300,17 @@ class SwipeNav {
         });
     }
 
+    // resize event handler
     _resize () {
         this.kill();
         this.setup();
     }
 
+    /**
+     * Setup SwipeNav.
+     *
+     * Register events and prepare slides according to slideIndex.
+     */
     setup () {
         this._width = this._container.getBoundingClientRect().width || this._container.offsetWidth;
 
@@ -332,6 +348,9 @@ class SwipeNav {
         this._container.style.visibility = 'visible';
     }
 
+    /**
+     * Remove SwipeNav from the DOM.
+     */
     kill () {
         // reset element
         this._element.style.width = '';
@@ -346,11 +365,20 @@ class SwipeNav {
 
         // remove event listeners
         this._element.removeEventListener('touchstart', this._touchStartCallback, false);
-        this._element.removeEventListener('touchstart', this._touchMoveCallback, false);
-        this._element.removeEventListener('touchstart', this._touchEndCallback, false);
+        this._element.removeEventListener('touchmove', this._touchMoveCallback, false);
+        this._element.removeEventListener('touchend', this._touchEndCallback, false);
         window.removeEventListener('resize', this._resizeCallback);
     }
 
+    /**
+     * Set bounds for swiping.
+     *
+     * If right/left is true, swiping to the left/right will bounce and the
+     * slide will not be shown.
+     *
+     * Will not be reset after a swipe. Set this before swiping via
+     * ontouchstart on swipe-elements.
+     */
     setIsContentAvailable ({left, right}) {
         this._isSwipeLeftAllowed = right;
         this._isSwipeRightAllowed = left;
