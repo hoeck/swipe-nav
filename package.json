@@ -5,7 +5,7 @@
   "main": "swipe-nav.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "http-server . -p 8080 -c-1"
+    "start": "sh -c 'http-server . -p ${1:-8080} -c-1' --"
   },
   "repository": {
     "type": "git",
