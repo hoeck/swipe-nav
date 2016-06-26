@@ -64,14 +64,14 @@
                             <em>Swipe to the right over each item to uncover its contents!</em>
                         </div>
                     </div>
-                    <div ontouchstart="loadContent('intro');" class="h4 item p2 divider">Swipe left to navigate</div>
-                    <div ontouchstart="loadContent('usage')" class="h4 item p2 divider">Usage</div>
-                    <div ontouchstart="loadContent('links')" class="h4 item p2">Links</div>
+                    <div ontouchstart="loadContent('intro'); animateTopMenuForward(event);" class="h4 item p2 divider">Swipe left to navigate</div>
+                    <div ontouchstart="loadContent('usage'); animateTopMenuForward(event);" class="h4 item p2 divider">Usage</div>
+                    <div ontouchstart="loadContent('links'); animateTopMenuForward(event);" class="h4 item p2">Links</div>
                 </div>
                 <div class="full px2 vscroll">
                     <!-- level 1 -->
                     <div id="nothing"></div>
-                    <div class="full" style="display: none;" id="intro">
+                    <div ontouchstart="animateTopMenuBack();" class="full" style="display: none;" id="intro">
                         <div ontouchstart="loadContent('nothing2'); noMoreContent()" class="txt--center">
                             <h2>Intro</h2>
                         </div>
@@ -80,7 +80,7 @@
                         <div ontouchstart="loadContent('rationale');" class="h4 item p2">Rationale</div>
                     </div>
 
-                    <div ontouchstart="noMoreContent();" id="links" class="full" style="display: none;">
+                    <div ontouchstart="noMoreContent(); animateTopMenuBack();" id="links" class="full" style="display: none;">
                         <h2>Links</h2>
 
                         <div class="media">
@@ -102,7 +102,7 @@
                         </div>
                     </div>
 
-                    <div ontouchstart="noMoreContent();" id="usage" class="full" style="display: none;">
+                    <div ontouchstart="noMoreContent(); animateTopMenuBack();" id="usage" class="full" style="display: none;">
                         <h2 class="txt--center">Usage</h2>
 
                         <pre><code class="css">.swipe-nav {
@@ -231,6 +231,27 @@ function loadContent (id) {
 
     contentElement.style.display = 'block';
 }
+
+let selectedTopMenuElement;
+
+function animateTopMenuForward (event) {
+    selectedTopMenuElement = event.currentTarget;
+    swipeNav.setAnimations([(distance, duration) => {
+        const color = 255 - Math.abs(Math.floor(distance * 128));
+        selectedTopMenuElement.style.transitionDuration = `${duration}ms`;
+        selectedTopMenuElement.style.background = `rgb(${color},${color},${color})`;
+    }]);
+}
+
+function animateTopMenuBack () {
+    swipeNav.setAnimations([(distance, duration) => {
+        const color = 128 + Math.abs(Math.floor(distance * 128));
+        selectedTopMenuElement.style.transitionDuration = `${duration}ms`;
+        selectedTopMenuElement.style.background = `rgb(${color},${color},${color})`;
+    }]);
+}
+
+
 
 // display a warning if this is not a touch device
 if (!('ontouchstart' in window)) {

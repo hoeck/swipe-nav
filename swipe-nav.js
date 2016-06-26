@@ -85,6 +85,9 @@ class SwipeNav {
         this._slideIndex = options.slideIndex || 0; // currently displayed slide
         this._slidePositions = [];
 
+        // custom animation functions executed during a swipe gesture
+        this._animationCallbacks = [];
+
         // set artificial swipe bounds
         this._isSwipeLeftAllowed = true;
         this._isSwipeRightAllowed = true;
@@ -93,7 +96,7 @@ class SwipeNav {
     }
 
     // permanently (update _slidePositions) move a slide to targetPosition
-    _moveSlide (index, targetPosition, speed) {
+    _moveSlide (index, targetPosition, duration) {
         const slide = this._slides[index];
 
         if (!slide) {
@@ -102,21 +105,28 @@ class SwipeNav {
 
         this._slidePositions[index] = targetPosition;
 
-        slide.style.transitionDuration = `${speed || 0}ms`;
+        slide.style.transitionDuration = `${duration || 0}ms`;
         slide.style.transform = `translateX(${targetPosition}px)`;
     }
 
     // move a slide temporarily by distance pixels relative to their current
     // permanent position
-    _translateSlide (index, distance, speed) {
+    _translateSlide (index, distance, duration) {
         const slide = this._slides[index];
 
         if (!slide) {
             return;
         }
 
-        slide.style.transitionDuration = `${speed || 0}ms`;
+        slide.style.transitionDuration = `${duration || 0}ms`;
         slide.style.transform = `translateX(${this._slidePositions[index] + distance}px)`;
+    }
+
+    // execute animate callbacks
+    _executeAnimations (relativeDistance, duration) {
+        for (let i = 0; i < this._animationCallbacks.length; i++) {
+            this._animationCallbacks[i](relativeDistance, duration);
+        }
     }
 
     // touchstart event handler
@@ -221,9 +231,15 @@ class SwipeNav {
         //  screen refresh and even when not moving the thumb)
         if (this._animationFrameId === null) {
             this._animationFrameId = window.requestAnimationFrame(() => {
+                // move slides
                 this._translateSlide(this._slideIndex - 1, this._distance, 0);
                 this._translateSlide(this._slideIndex, this._distance, 0);
                 this._translateSlide(this._slideIndex + 1, this._distance, 0);
+
+                // animations
+                this._executeAnimations(this._distance / this._width, 0);
+
+                // mark this frame as done and allow a new one to be requested
                 this._animationFrameId = null;
             });
         }
@@ -293,11 +309,13 @@ class SwipeNav {
                     this._moveSlide(this._slideIndex - 1, -this._width, 0);
                     this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] - this._width, transitionTime);
                     this._moveSlide(this._slideIndex + 1, this._slidePositions[this._slideIndex + 1] - this._width, transitionTime);
+                    this._executeAnimations(-1, transitionTime);
                     this._slideIndex += 1;
                 } else {
                     this._moveSlide(this._slideIndex + 1, this._width, 0);
                     this._moveSlide(this._slideIndex, this._slidePositions[this._slideIndex] + this._width, transitionTime);
                     this._moveSlide(this._slideIndex - 1, this._slidePositions[this._slideIndex - 1] + this._width, transitionTime);
+                    this._executeAnimations(1, transitionTime);
                     this._slideIndex -= 1;
                 }
             } else {
@@ -305,7 +323,10 @@ class SwipeNav {
                 this._moveSlide(this._slideIndex - 1, -this._width, 300);
                 this._moveSlide(this._slideIndex, 0, 300);
                 this._moveSlide(this._slideIndex + 1, this._width, 300);
+                this._executeAnimations(0, 300);
             }
+
+            this._animationCallbacks = [];
         });
     }
 
@@ -380,15 +401,37 @@ class SwipeNav {
     }
 
     /**
-     * Set bounds for swiping.
+     * Set bounds for the current swipe gesture.
      *
      * If right/left is true, swiping to the left/right will bounce and the
      * slide will not be shown.
      *
-     * Will be reset to {left:true, right:true} on touch end.
+     * Bounds are only valid for the curret swipe (will be reset to
+     * {left:true, right:true} on touch end).
      */
     setIsContentAvailable ({left, right}) {
         this._isSwipeLeftAllowed = right;
         this._isSwipeRightAllowed = left;
+    }
+
+    /**
+     * Set an Array of animation function for the current swipe gesture.
+     *
+     * For each frame, each animationCallback is called with the current
+     * relative swipe distance (-1: left, 0: center, 1: right) and the
+     * duration when the given swipe distance will be reached (in ms).
+     *
+     * Animations are only executed for the current swipe (reset on
+     * touchend).
+     *
+     * Example:
+     *
+     *   .setAnimations([(dist, duration) => {
+     *       element.style.transitionDuration = `${duration}ms`;
+     *       element.style.background = `rgb(0,0,${Math.abs(Math.floor(dist * 255))})`;
+     *   }]);
+     */
+    setAnimations (animationCallbacks) {
+        this._animationCallbacks = animationCallbacks;
     }
 }
