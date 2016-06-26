@@ -231,9 +231,6 @@ class SwipeNav {
 
     // touchend event handler
     _touchEnd (event) {
-        if (this._isScrolling) {
-            return;
-        }
 
         const isSwipingLeft = this._distance < 0;
         const isSwipingRight = this._distance > 0;
@@ -251,6 +248,12 @@ class SwipeNav {
                    && this._slideIndex !== this._slides.length - 1
                    && this._isSwipeLeftAllowed);
 
+        // click detection
+        const hasNotMoved = Math.abs(this._energy) < this._CLICK_ENERGY_THRESHOLD;
+        const isShortTouch = (event.timeStamp - this._startTime) < this._CLICK_TIME_MAX;
+
+        // cleanup
+
         // remove listeners
         this._element.removeEventListener('touchmove', this._touchMoveCallback, false);
         this._element.removeEventListener('touchend', this._touchEndCallback, false);
@@ -261,9 +264,15 @@ class SwipeNav {
             this._animationFrameId = null;
         }
 
-        // click detection
-        const hasNotMoved = Math.abs(this._energy) < this._CLICK_ENERGY_THRESHOLD;
-        const isShortTouch = (event.timeStamp - this._startTime) < this._CLICK_TIME_MAX;
+        // reset swipe boundaries
+        this._isSwipeLeftAllowed = true;
+        this._isSwipeRightAllowed = true;
+
+        // final actions
+
+        if (this._isScrolling) {
+            return;
+        }
 
         if (hasNotMoved && isShortTouch) {
             simulateClick(event.target);
@@ -376,8 +385,7 @@ class SwipeNav {
      * If right/left is true, swiping to the left/right will bounce and the
      * slide will not be shown.
      *
-     * Will not be reset after a swipe. Set this before swiping via
-     * ontouchstart on swipe-elements.
+     * Will be reset to {left:true, right:true} on touch end.
      */
     setIsContentAvailable ({left, right}) {
         this._isSwipeLeftAllowed = right;
