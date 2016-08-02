@@ -4,8 +4,11 @@
   "description": "swipe-to-navigate component in plain ES6",
   "main": "swipe-nav.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "sh -c 'http-server . -p ${1:-8080} -c-1' --"
+    "build": "npm run _clean && npm run _compile && npm run _compress",
+    "start": "sh -c 'http-server . -p ${1:-8080} -c-1' --",
+    "_clean": "rm -f dist/*",
+    "_compile": "babel --presets babel-preset-es2015 --plugins 'babel-plugin-add-module-exports,babel-plugin-transform-es2015-modules-umd' swipe-nav.js > dist/swipe-nav.js",
+    "_compress": "uglifyjs dist/swipe-nav.js -c -m > dist/swipe-nav.min.js"
   },
   "repository": {
     "type": "git",
@@ -18,8 +21,13 @@
   },
   "homepage": "https://github.com/hoeck/swipe-nav#readme",
   "devDependencies": {
+    "babel-cli": "^6.11.4",
     "babel-eslint": "^6.0.5",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-es2015-modules-umd": "^6.12.0",
+    "babel-preset-es2015": "^6.9.0",
     "eslint": "^2.13.1",
-    "http-server": "^0.9.0"
+    "http-server": "^0.9.0",
+    "uglifyjs": "^2.4.10"
   }
 }

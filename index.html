@@ -139,7 +139,7 @@
     '.swipe-nav'
 );
 
-const swipeNav = new SwipeNav({
+const swipeNavComponent = swipeNav.create({
     container: element
 });
 
@@ -150,7 +150,7 @@ function touchStart (event) {
     // content based on event.target
 
     // or set swipe boundaries via
-    swipeNav.setIsContentAvailable({
+    swipeNavComponent.setIsContentAvailable({
         left:true,
         right: false
     });
@@ -205,25 +205,25 @@ function touchStart (event) {
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
-        <script src="swipe-nav.js"></script>
+        <script src="dist/swipe-nav.min.js"></script>
         <script>
 hljs.initHighlightingOnLoad();
 
 // pure JS
-const element = document.querySelectorAll('.swipe-nav')[0];
+var element = document.querySelectorAll('.swipe-nav')[0];
 
-const swipeNav = new SwipeNav({
+var swipeNavComponent = swipeNav.create({
     container: element
 });
 
 function noMoreContent () {
-    swipeNav.setIsContentAvailable({left:true, right: false});
+    swipeNavComponent.setIsContentAvailable({left:true, right: false});
 }
 
 function loadContent (id) {
-    swipeNav.setIsContentAvailable({left:true, right: true});
+    swipeNavComponent.setIsContentAvailable({left:true, right: true});
 
-    const contentElement = document.getElementById(id);
+    var contentElement = document.getElementById(id);
 
     Array.prototype.slice.call(contentElement.parentElement.children).forEach((element) => {
         element.style.display = 'none';
@@ -232,20 +232,20 @@ function loadContent (id) {
     contentElement.style.display = 'block';
 }
 
-let selectedTopMenuElement;
+var selectedTopMenuElement;
 
 function animateTopMenuForward (event) {
     selectedTopMenuElement = event.currentTarget;
-    swipeNav.setAnimations([(distance, duration) => {
-        const color = 255 - Math.abs(Math.floor(distance * 128));
+    swipeNavComponent.setAnimations([(distance, duration) => {
+        var color = 255 - Math.abs(Math.floor(distance * 128));
         selectedTopMenuElement.style.transitionDuration = `${duration}ms`;
         selectedTopMenuElement.style.background = `rgb(${color},${color},${color})`;
     }]);
 }
 
 function animateTopMenuBack () {
-    swipeNav.setAnimations([(distance, duration) => {
-        const color = 128 + Math.abs(Math.floor(distance * 128));
+    swipeNavComponent.setAnimations([(distance, duration) => {
+        var color = 128 + Math.abs(Math.floor(distance * 128));
         selectedTopMenuElement.style.transitionDuration = `${duration}ms`;
         selectedTopMenuElement.style.background = `rgb(${color},${color},${color})`;
     }]);

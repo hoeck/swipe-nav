@@ -41,13 +41,18 @@ function simulateClick (element) {
 /**
  * Low-level swipe component.
  */
-class SwipeNav {
+export default class SwipeNav {
 
     /**
      * options:
      * - container: a DOM element
      * - index: index of the slide to display initially
      */
+    static create (options) {
+        return new SwipeNav(options);
+    }
+
+    // use .create instead
     constructor (options) {
         // DOM nodes
         this._container = options.container;
