@@ -1,6 +1,6 @@
 {
   "name": "swipe-nav",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "swipe-to-navigate component in plain ES6",
   "main": "swipe-nav.js",
   "scripts": {
