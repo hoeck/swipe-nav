@@ -1,7 +1,7 @@
 # Swipe-Nav
-Swipe-to-navigate component in plain ES6. [Demo](https://hoeck.github.io/swipe-nav).
+Swipe-to-navigate component in plain ES6, inspired by [Swipe](https://github.com/lyfeyaj/swipe).
 
-Inspired by [Swipe](https://github.com/lyfeyaj/swipe).
+[Demo](https://hoeck.github.io/swipe-nav).
 
 ## Features
 
