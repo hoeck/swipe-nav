@@ -46,7 +46,8 @@ export default class SwipeNav {
     /**
      * options:
      * - container: a DOM element
-     * - index: index of the slide to display initially
+     * - index: index of the slide to display initially (default: 0)
+     * - onIndexUpdate: called when the index changes
      */
     static create (options) {
         return new SwipeNav(options);
@@ -56,8 +57,12 @@ export default class SwipeNav {
     constructor (options) {
         // DOM nodes
         this._container = options.container;
-        this._element = this._container.children[0];
+        this._element = this._container.children[options.index || 0];
         this._slides = Array.prototype.slice.call(this._element.children);
+
+        // index update callback
+        this._onIndexUpdate = options.onIndexUpdate || (index => {});
+        this._executeOnIndexUpdate = this._executeOnIndexUpdate.bind(this);
 
         // event callbacks (bound methods)
         this._resizeCallback = this._resize.bind(this);
@@ -132,6 +137,11 @@ export default class SwipeNav {
         for (let i = 0; i < this._animationCallbacks.length; i++) {
             this._animationCallbacks[i](relativeDistance, duration);
         }
+    }
+
+    // invoke the onIndexUpdate callback
+    _executeOnIndexUpdate () {
+        this._onIndexUpdate(this._slideIndex);
     }
 
     // touchstart event handler
@@ -297,6 +307,7 @@ export default class SwipeNav {
 
         if (hasNotMoved && isShortTouch) {
             simulateClick(event.target);
+            // TODO: why no return at the end?
         }
 
         // finish the swipe using a css transition
@@ -323,6 +334,10 @@ export default class SwipeNav {
                     this._executeAnimations(1, transitionTime);
                     this._slideIndex -= 1;
                 }
+
+                // run the index update callback outside of this frame
+                window.setTimeout(this._executeOnIndexUpdate, 0);
+
             } else {
                 // move slides back into their current position
                 this._moveSlide(this._slideIndex - 1, -this._width, 300);

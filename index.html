@@ -208,7 +208,7 @@ function touchStart (event) {
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
-        <script src="dist/swipe-nav.min.js"></script>
+        <script src="dist/swipe-nav.js"></script>
         <script>
 hljs.initHighlightingOnLoad();
 
@@ -216,7 +216,10 @@ hljs.initHighlightingOnLoad();
 var element = document.querySelectorAll('.swipe-nav')[0];
 
 var swipeNavComponent = swipeNav.create({
-    container: element
+    container: element,
+    onIndexUpdate: function (newIndex) { // called after each successfull swipe gesture
+        console.log('slide index', newIndex);
+    }
 });
 
 function noMoreContent () {
