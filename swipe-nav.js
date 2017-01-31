@@ -75,6 +75,7 @@ export default class SwipeNav {
         this._SWIPE_ENERGY_THRESHOLD = 0.25;
         this._CLICK_ENERGY_THRESHOLD = 0.03;
         this._CLICK_TIME_MAX = 350;
+        this._FIRST_MOVE_DURATION = 50;
 
         // render state
         this._animationFrameId = null; // current touchmove animation frame
@@ -84,6 +85,7 @@ export default class SwipeNav {
         this._startY = null; // touch start pageY
         this._startTime = null; // touch start timestamp
         this._isScrolling = null;
+        this._isFirstMoveEvent = false; // true only once after touch start
 
         this._deltaX = null; // horizontal distance from touch start
         this._deltaY = null; // vertical distance from touch start
@@ -146,10 +148,6 @@ export default class SwipeNav {
 
     // touchstart event handler
     _touchStart (event) {
-        // disable the default action (zoom) to not loose the first few move
-        // events - loosing them results in a badly stuttering swipe start
-        event.preventDefault();
-
         // get initial touch points (for delta computation)
         this._startX = event.touches[0].pageX;
         this._startY = event.touches[0].pageY;
@@ -157,6 +155,7 @@ export default class SwipeNav {
         // reset all other points
         this._startTime = event.timeStamp;
         this._isScrolling = null;
+        this._isFirstMoveEvent = true;
         this._deltaX = 0;
         this._deltaY = 0;
         this._deltaT = 0;
@@ -246,13 +245,28 @@ export default class SwipeNav {
         //  screen refresh and even when not moving the thumb)
         if (this._animationFrameId === null) {
             this._animationFrameId = window.requestAnimationFrame(() => {
+
+                // Smooth initial slide movement:
+                // when rendering the initial move, use a slight animation delay
+                // to compensate for the first few missed touchmove events due
+                // to the browser trying to detect a scroll or zoom
+                // (cannot preventDefault touchstart to get all initial
+                // touchmoves as that also disables native browser scroll).
+                let duration = 0;
+                if (this._isFirstMoveEvent) {
+                    this._isFirstMoveEvent = false;
+                    // TODO: instead of using a constant, compute the duration
+                    // based on the actual moved distance
+                    duration = this._FIRST_MOVE_DURATION;
+                }
+
                 // move slides
-                this._translateSlide(this._slideIndex - 1, this._distance, 0);
-                this._translateSlide(this._slideIndex, this._distance, 0);
-                this._translateSlide(this._slideIndex + 1, this._distance, 0);
+                this._translateSlide(this._slideIndex - 1, this._distance, duration);
+                this._translateSlide(this._slideIndex, this._distance, duration);
+                this._translateSlide(this._slideIndex + 1, this._distance, duration);
 
                 // animations
-                this._executeAnimations(this._distance / this._width, 0);
+                this._executeAnimations(this._distance / this._width, duration);
 
                 // mark this frame as done and allow a new one to be requested
                 this._animationFrameId = null;

@@ -99,8 +99,12 @@
 
             // DOM nodes
             this._container = options.container;
-            this._element = this._container.children[0];
+            this._element = this._container.children[options.index || 0];
             this._slides = Array.prototype.slice.call(this._element.children);
+
+            // index update callback
+            this._onIndexUpdate = options.onIndexUpdate || function (index) {};
+            this._executeOnIndexUpdate = this._executeOnIndexUpdate.bind(this);
 
             // event callbacks (bound methods)
             this._resizeCallback = this._resize.bind(this);
@@ -113,6 +117,7 @@
             this._SWIPE_ENERGY_THRESHOLD = 0.25;
             this._CLICK_ENERGY_THRESHOLD = 0.03;
             this._CLICK_TIME_MAX = 350;
+            this._FIRST_MOVE_DURATION = 50;
 
             // render state
             this._animationFrameId = null; // current touchmove animation frame
@@ -122,6 +127,7 @@
             this._startY = null; // touch start pageY
             this._startTime = null; // touch start timestamp
             this._isScrolling = null;
+            this._isFirstMoveEvent = false; // true only once after touch start
 
             this._deltaX = null; // horizontal distance from touch start
             this._deltaY = null; // vertical distance from touch start
@@ -180,12 +186,13 @@
                 }
             }
         }, {
+            key: '_executeOnIndexUpdate',
+            value: function _executeOnIndexUpdate() {
+                this._onIndexUpdate(this._slideIndex);
+            }
+        }, {
             key: '_touchStart',
             value: function _touchStart(event) {
-                // disable the default action (zoom) to not loose the first few move
-                // events - loosing them results in a badly stuttering swipe start
-                event.preventDefault();
-
                 // get initial touch points (for delta computation)
                 this._startX = event.touches[0].pageX;
                 this._startY = event.touches[0].pageY;
@@ -193,6 +200,7 @@
                 // reset all other points
                 this._startTime = event.timeStamp;
                 this._isScrolling = null;
+                this._isFirstMoveEvent = true;
                 this._deltaX = 0;
                 this._deltaY = 0;
                 this._deltaT = 0;
@@ -282,13 +290,28 @@
                 //  screen refresh and even when not moving the thumb)
                 if (this._animationFrameId === null) {
                     this._animationFrameId = window.requestAnimationFrame(function () {
+
+                        // Smooth initial slide movement:
+                        // when rendering the initial move, use a slight animation delay
+                        // to compensate for the first few missed touchmove events due
+                        // to the browser trying to detect a scroll or zoom
+                        // (cannot preventDefault touchstart to get all initial
+                        // touchmoves as that also disables native browser scroll).
+                        var duration = 0;
+                        if (_this._isFirstMoveEvent) {
+                            _this._isFirstMoveEvent = false;
+                            // TODO: instead of using a constant, compute the duration
+                            // based on the actual moved distance
+                            duration = _this._FIRST_MOVE_DURATION;
+                        }
+
                         // move slides
-                        _this._translateSlide(_this._slideIndex - 1, _this._distance, 0);
-                        _this._translateSlide(_this._slideIndex, _this._distance, 0);
-                        _this._translateSlide(_this._slideIndex + 1, _this._distance, 0);
+                        _this._translateSlide(_this._slideIndex - 1, _this._distance, duration);
+                        _this._translateSlide(_this._slideIndex, _this._distance, duration);
+                        _this._translateSlide(_this._slideIndex + 1, _this._distance, duration);
 
                         // animations
-                        _this._executeAnimations(_this._distance / _this._width, 0);
+                        _this._executeAnimations(_this._distance / _this._width, duration);
 
                         // mark this frame as done and allow a new one to be requested
                         _this._animationFrameId = null;
@@ -337,6 +360,7 @@
 
                 if (hasNotMoved && isShortTouch) {
                     simulateClick(event.target);
+                    // TODO: why no return at the end?
                 }
 
                 // finish the swipe using a css transition
@@ -363,6 +387,9 @@
                             _this2._executeAnimations(1, transitionTime);
                             _this2._slideIndex -= 1;
                         }
+
+                        // run the index update callback outside of this frame
+                        window.setTimeout(_this2._executeOnIndexUpdate, 0);
                     } else {
                         // move slides back into their current position
                         _this2._moveSlide(_this2._slideIndex - 1, -_this2._width, 300);
