@@ -50,7 +50,14 @@ export default class SwipeNav {
      * - onIndexUpdate: called when the index changes
      */
     static create (options) {
-        return new SwipeNav(options);
+        return new SwipeNav({
+            // map options from strings to keys to avoid google closure symbol
+            // renaming issues when calling from clojurescript
+            // TODO: there is probably a better way to achieve this
+            container: options['container'],
+            index: options['index'],
+            onIndexUpdate: options['onIndexUpdate']
+        });
     }
 
     // use .create instead
@@ -94,7 +101,7 @@ export default class SwipeNav {
         this._velocity = 0; // current horizontal (X) velocity
         this._energy = 0; // energy applied during a swipe
 
-        this._slideIndex = options.slideIndex || 0; // currently displayed slide
+        this._slideIndex = options.index || 0; // currently displayed slide
         this._slidePositions = [];
 
         // custom animation functions executed during a swipe gesture
